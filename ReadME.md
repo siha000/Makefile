@@ -1,4 +1,4 @@
-Makefile運用
+Makefile
 ======
 
 ### MakeFile規則
@@ -124,4 +124,168 @@ clean :
 
 + 若這邊更改buffer.h，那display.o/insert.o/search.o/files.o會重新編譯，並與edit重新連接
 
-### 
+### Makefile使用變數
+
+```
+
+edit : main.o kbd.o command.o display.o insert.o search.o files.o utils.o
+
+    cc -o edit main.o kbd.o command.o display.o insert.o search.o files.o utils.o
+
+```
+
++ 上面例子出現了兩次main.o kbd.o command.o display.o insert.o search.o files.o utils.o，若要之後專案越來越多，要更改地方越來越多，因此可以像寫程式一樣給它一個變數
+
+```
+
+ objects = main.o kbd.o command.o display.o insert.o search.o files.o utils.o
+
+ edit : $(objects)
+
+    cc -o edit $(objects)
+
+```
+
++ 接下來下面實例會看到一些Makefile專用符號
+
+```
+
+$@  表示目標文件
+$^  表示所有的依賴文件
+$<  表示第一個依賴文件
+$?  表示比目標還要新的依賴文件列表
+
+```
+
++ 因此上面例子可以簡寫成
+
+```
+
+objects = main.o kbd.o command.o display.o insert.o search.o files.o utils.o
+
+edit : $(objects)
+
+    cc -o $@ $^
+
+ 
+main.o : main.c defs.h
+
+        cc -c $<
+
+kbd.o : kbd.c defs.h command.h
+
+        cc -c $<
+
+command.o : command.c defs.h command.h
+
+        cc -c $<
+
+display.o : display.c defs.h buffer.h
+
+        cc -c $<
+
+insert.o : insert.c defs.h buffer.h
+
+        cc -c $<
+
+search.o : search.c defs.h buffer.h
+
+        cc -c $<
+
+files.o : files.c defs.h buffer.h command.h
+
+        cc -c $<
+
+utils.o : utils.c defs.h
+
+        cc -c $<
+
+clean :
+
+    rm edit $(objects)
+
+```
+
+### Make自動推導
+
++ Make只要看到.o檔，會自動把.c檔加在依賴關係，所以假設Make找到一個files.o檔，會自動將files.c加入依賴關係，因此可以將例子再改寫
+
+```
+
+objects = main.o kbd.o command.o display.o insert.o search.o files.o utils.o
+
+edit : $(objects)
+
+    cc -o $@ $^
+
+ 
+main.o : defs.h
+
+
+kbd.o : defs.h command.h
+
+
+command.o : defs.h command.h
+
+
+display.o : defs.h buffer.h
+
+
+insert.o :  defs.h buffer.h
+
+
+search.o :  defs.h buffer.h
+
+
+files.o :  defs.h buffer.h command.h
+
+
+utils.o :  defs.h
+
+
+clean :
+
+    rm edit $(objects)
+
+```
+
+### Make 偽目標
+
++ Make偽目標用法為.PHONY，若使用.PHONY的目標，會執行clean內指令，若沒加如果剛好有clean檔會執行clean檔案
+
+```
+
+clean.o:clean.c
+    gcc -g$< -o clean
+
+clean :
+    -rm -rf clean 
+
+未加入.PHONY就會執行clean檔
+
+```
+
+![markdown-viewer](Image/1.png)
+
+```
+clean.o:clean.c
+    gcc -g$< -o clean
+
+.PHONY:clean
+
+clean :
+    -rm -rf clean 
+
+加入.PHONY就會執行clean指令
+
+```
+
+![markdown-viewer](Image/2.png)
+
+
+
+
+
+
+
+
